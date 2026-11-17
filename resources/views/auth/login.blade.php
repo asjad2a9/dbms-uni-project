@@ -10,7 +10,7 @@
     <link href="{{ asset('css/admin.css') }}" rel="stylesheet">
     <style>
         .auth-wrap { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 1fr; }
-        .auth-hero { background: linear-gradient(160deg, rgba(17,24,39,.92), rgba(17,24,39,.75)), url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1400&q=70') center/cover; color: #fff; padding: 3rem; display: flex; flex-direction: column; justify-content: space-between; }
+        .auth-hero { background: linear-gradient(160deg, rgba(17,24,39,.92), rgba(17,24,39,.75)), url('{{ asset('images/gym-floor.jpg') }}') center/cover; color: #fff; padding: 3rem; display: flex; flex-direction: column; justify-content: space-between; }
         .auth-hero h2 { font-weight: 800; font-size: 2.6rem; line-height: 1.1; }
         .auth-form { display: grid; place-items: center; padding: 2rem 1.25rem; background: #fff; }
         .auth-card { width: 100%; max-width: 400px; }

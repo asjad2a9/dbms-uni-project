@@ -35,6 +35,6 @@ class SiteController extends Controller
 
         Inquiry::create($data);
 
-        return redirect()->to(route('home') . '#join')->with('success', 'Thanks ' . $data['name'] . '! Our team will contact you shortly.');
+        return redirect()->to(route('home') . '#contact')->with('success', 'Thanks ' . $data['name'] . '! Our team will contact you shortly.');
     }
 }

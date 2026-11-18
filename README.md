@@ -34,6 +34,10 @@ The UI uses Bootstrap 5, Bootstrap Icons and Chart.js from a CDN, so there is no
 
 ## 🗄️ Database Schema
 
+📐 **ERD, keys and relationships:** [docs/ERD.md](docs/ERD.md) · DDL: [docs/schema.sql](docs/schema.sql) · Example JOIN queries: [docs/queries.sql](docs/queries.sql)
+
+![ERD](docs/erd.png)
+
 ```
 users              (id, name, email, phone, role[admin|staff], is_active, password, ...)
 membership_plans   (id, name, duration_days, price, description, features, is_active)

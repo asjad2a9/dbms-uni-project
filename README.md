@@ -10,6 +10,7 @@ Built as a semester project for **Database Management Systems (DBMS)**.
 
 ## Contents
 
+- [Live demo](#live-demo)
 - [Features](#features)
 - [Screenshots](#screenshots)
 - [Tech stack](#tech-stack)
@@ -21,6 +22,14 @@ Built as a semester project for **Database Management Systems (DBMS)**.
 - [Configuration](#configuration)
 - [Documentation](#documentation)
 - [Team](#team)
+
+---
+
+## Live demo
+
+**https://gym.zapronixdigital.com**
+
+The project is deployed on shared cPanel hosting (PHP 8.2, MariaDB, HTTPS). The public website is open to everyone. The admin login at `/login` uses private credentials that are **not** published here. To try the admin panel yourself, run it locally with the demo accounts below.
 
 ---
 
@@ -112,6 +121,8 @@ The seeder loads demo data: 4 plans, 5 trainers, 30 members with a year of subsc
 
 ## Demo accounts
 
+These accounts are created by `php artisan migrate --seed` on your own machine. The live site uses different passwords.
+
 | Role | Email | Password |
 |---|---|---|
 | Admin | `admin@gym.test` | `password` |
@@ -197,6 +208,17 @@ The app works with or without it. [`docs/queries.sql`](docs/queries.sql) has 18 
 
 No cron job is needed. Subscriptions are marked expired automatically whenever the dashboard or subscriptions page loads.
 
+### Notes from a real deployment
+
+These came up when the live demo was set up, and may save you time:
+
+- **Set PHP 8.2 or newer** for the domain or subdomain (cPanel → *MultiPHP Manager*). Many hosts default to 8.1, and Laravel 11 will not run on it.
+- **Keep the package small.** Build `vendor/` on your PC with `composer install --no-dev --optimize-autoloader --prefer-dist`. If it comes out huge, the libraries were fetched with git history. Remove it with `find vendor -name .git -prune -exec rm -rf {} +`. The final zip should be about 15–20 MB.
+- **Do not overwrite cPanel's `.htaccess` block.** cPanel writes a "cPanel-generated handler" section into `public/.htaccess` for the PHP version. Keep it at the bottom and put Laravel's rewrite rules above it.
+- **Keep `.env` outside the web root.** If the document root is the project's `public/` folder, `.env`, `vendor/` and `storage/` are not reachable from the web.
+- **Use HTTPS.** If the browser reports an expired certificate on a new subdomain, check cPanel → *SSL/TLS Status* → *Manage AutoSSL* → *Excluded domains*. An older subdomain with the same name may still be excluded.
+- **No SSH or terminal?** Run the migrations on your PC against an empty database, export it from phpMyAdmin and import it on the server (see step 6).
+
 ---
 
 ## Project structure
@@ -247,7 +269,7 @@ To change the brand colour, edit `--brand` in `public/css/admin.css` and `public
 | [`docs/schema.sql`](docs/schema.sql) | Table definitions exported from MySQL |
 | [`docs/queries.sql`](docs/queries.sql) | 18 example queries |
 | [`docs/dbms_objects.sql`](docs/dbms_objects.sql) | Views, procedures, triggers, CHECK constraints |
-| [`docs/IronPulse_Gym_DBMS_Project_Report.docx`](docs/IronPulse_Gym_DBMS_Project_Report.docx) | Project report (Word) |
+| [`docs/IronPulse_Gym_DBMS_Project_Report.docx`](docs/IronPulse_Gym_DBMS_Project_Report.docx) | Project report (Word, 15 pages, includes the deployment section) |
 
 ---
 

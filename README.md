@@ -36,6 +36,8 @@ The UI uses Bootstrap 5, Bootstrap Icons and Chart.js from a CDN, so there is no
 
 📐 **ERD, keys and relationships:** [docs/ERD.md](docs/ERD.md) · DDL: [docs/schema.sql](docs/schema.sql) · Example JOIN queries: [docs/queries.sql](docs/queries.sql)
 
+🧩 **Views, stored procedures, triggers and CHECK constraints:** [docs/dbms_objects.sql](docs/dbms_objects.sql). Run it once after `php artisan migrate --seed` (in phpMyAdmin → SQL tab). It adds 5 views, 5 stored procedures, 3 triggers, 6 CHECK constraints, 2 indexes and an audit table. The app works with or without them.
+
 ![ERD](docs/erd.png)
 
 ```

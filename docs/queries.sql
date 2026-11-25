@@ -72,3 +72,64 @@ SELECT COALESCE(u.name, '(unknown)') AS received_by, COUNT(*) AS payments, SUM(p
 FROM payments pay
 LEFT JOIN users u ON u.id = pay.received_by
 GROUP BY u.name;
+
+-- =====================================================================
+--  More join types, subqueries, set operations and functions
+-- =====================================================================
+
+-- 9) RIGHT JOIN: every plan, even ones nobody has bought (plans on the right)
+SELECT p.name AS plan, COUNT(s.id) AS times_sold
+FROM subscriptions s
+RIGHT JOIN membership_plans p ON p.id = s.membership_plan_id
+GROUP BY p.id, p.name;
+
+-- 10) CROSS JOIN: every plan × every payment method (price list for the front desk)
+SELECT p.name AS plan, m.method, p.price
+FROM membership_plans p
+CROSS JOIN (SELECT 'cash' AS method UNION SELECT 'card' UNION SELECT 'bank_transfer' UNION SELECT 'online') m
+ORDER BY p.price, m.method;
+
+-- 11) SELF JOIN: pairs of members who joined on the same day
+SELECT a.name AS member_a, b.name AS member_b, a.joined_at
+FROM members a
+JOIN members b ON a.joined_at = b.joined_at AND a.id < b.id;
+
+-- 12) FULL OUTER JOIN emulated with UNION (MySQL has no FULL JOIN):
+--     all trainers and all members, matched where possible
+SELECT t.name AS trainer, m.name AS member FROM trainers t LEFT JOIN members m ON m.trainer_id = t.id
+UNION
+SELECT t.name AS trainer, m.name AS member FROM trainers t RIGHT JOIN members m ON m.trainer_id = t.id;
+
+-- 13) Single-row subquery: members heavier than the average weight
+SELECT name, weight_kg FROM members
+WHERE weight_kg > (SELECT AVG(weight_kg) FROM members)
+ORDER BY weight_kg DESC;
+
+-- 14) Multi-row subquery with IN: members who have ever bought the annual plan
+SELECT member_code, name FROM members
+WHERE id IN (SELECT member_id FROM subscriptions
+             WHERE membership_plan_id = (SELECT id FROM membership_plans WHERE name = 'Annual Champion'));
+
+-- 15) Correlated subquery: each member's most recent payment
+SELECT m.name, pay.invoice_no, pay.amount, pay.paid_at
+FROM members m
+JOIN payments pay ON pay.member_id = m.id
+WHERE pay.paid_at = (SELECT MAX(p2.paid_at) FROM payments p2 WHERE p2.member_id = m.id);
+
+-- 16) EXISTS: trainers who have at least one suspended or inactive member
+SELECT t.name FROM trainers t
+WHERE EXISTS (SELECT 1 FROM members m WHERE m.trainer_id = t.id AND m.status <> 'active');
+
+-- 17) Aggregates + DISTINCT + BETWEEN + LIKE
+SELECT COUNT(*) AS payments, COUNT(DISTINCT member_id) AS paying_members,
+       MIN(amount) AS smallest, MAX(amount) AS largest, ROUND(AVG(amount), 2) AS average, SUM(amount) AS total
+FROM payments
+WHERE paid_at BETWEEN '2026-01-01' AND '2026-12-31' AND invoice_no LIKE 'INV-2026%';
+
+-- 18) String, date and math functions
+SELECT UPPER(name) AS name_upper, CONCAT(member_code, ' / ', phone) AS contact,
+       TIMESTAMPDIFF(YEAR, dob, CURDATE()) AS age,
+       ROUND(weight_kg / POW(height_cm / 100, 2), 1) AS bmi
+FROM members
+ORDER BY bmi DESC
+LIMIT 10;

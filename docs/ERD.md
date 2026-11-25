@@ -5,7 +5,7 @@ The IronPulse Gym schema has **9 business tables** in MySQL (InnoDB, `utf8mb4_un
 ![ERD](erd.png)
 
 > The diagram source is below in Mermaid. GitHub renders it automatically. Vector version: [`erd.svg`](erd.svg).
-> Full DDL: [`schema.sql`](schema.sql) · Example JOIN queries: [`queries.sql`](queries.sql)
+> Full DDL: [`schema.sql`](schema.sql) · 18 example queries: [`queries.sql`](queries.sql) · Views, procedures, triggers: [`dbms_objects.sql`](dbms_objects.sql)
 
 ## Relationships
 

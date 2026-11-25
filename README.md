@@ -1,110 +1,182 @@
-# 🏋️ IronPulse Gym — Gym Management System
+# IronPulse Gym — Gym Management System
 
-A mid-level **Gym Management System** built with **Laravel 11 + Blade + MySQL**.
-No Redis, no Node build step, no queues. It runs on **shared cPanel hosting** with only PHP and MySQL.
+A complete **gym management system** built with **Laravel 11, Blade and MySQL**. It has a public website for visitors and a login-protected admin panel for staff. It runs on ordinary **shared cPanel hosting**: no Redis, no queue workers and no Node build step.
 
-It has two parts:
+Built as a semester project for **Database Management Systems (DBMS)**.
 
-1. **Public website** (`/`): landing page with features, live membership plans, trainers, and a "Book a free visit" form (saved as an inquiry).
-2. **Admin panel** (`/admin`): a dashboard plus pages for members, subscriptions, payments, attendance, plans, trainers, expenses, inquiries, reports and staff users.
-
-The UI uses Bootstrap 5, Bootstrap Icons and Chart.js from a CDN, so there is nothing to compile. Every page is responsive: on phones the sidebar becomes a slide-in menu and tables scroll sideways.
+![Website](docs/screenshots/website.jpg)
 
 ---
 
-## ✨ Features
+## Contents
+
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Tech stack](#tech-stack)
+- [Quick start](#quick-start)
+- [Demo accounts](#demo-accounts)
+- [Database](#database)
+- [Deploying to shared cPanel hosting](#deploying-to-shared-cpanel-hosting)
+- [Project structure](#project-structure)
+- [Configuration](#configuration)
+- [Documentation](#documentation)
+- [Team](#team)
+
+---
+
+## Features
+
+**Public website** (`/`)
+- Landing page with programs, pricing, coaches, reviews and a contact form.
+- Plans and coaches come live from the database.
+- The contact form saves a lead in the admin panel under *Inquiries*.
+
+**Admin panel** (`/admin`)
 
 | Module | What it does |
 |---|---|
-| **Auth** | Session login/logout, "remember me", disabled accounts blocked, roles `admin` / `staff` |
-| **Dashboard** | KPI cards, income vs expense chart (6 months), 7-day attendance chart, subscriptions expiring within 7 days, recent payments, newest members |
-| **Members** | CRUD, search/filter, auto member code (`GYM-00001`), BMI, assigned trainer, profile page with subscription, payment and attendance history, optional plan and payment at registration |
-| **Subscriptions** | Assign or renew plans, end date set automatically, discount, paid/due tracking, cancel, auto-expire, "expiring soon" filter |
-| **Payments** | Record payments (cash/card/bank/online), auto invoice no (`INV-YYYYMM-00001`), printable receipt, date and method filters |
-| **Attendance** | Quick check-in, check-out, daily log, warning when a member has no active plan |
-| **Membership Plans** | Pricing cards, features list, active/inactive, protected from deletion while in use |
-| **Trainers** | CRUD, specialization, salary, assigned members |
-| **Expenses** | Categorised expenses with date filters and totals |
-| **Inquiries** | Leads from the website form, status workflow, "convert to member" |
-| **Reports** | Yearly income, expenses, profit, new members and visits per month, with charts and a printable table |
-| **Staff Users** | Admin-only management of staff accounts |
-| **Profile** | Update own details and password |
+| Dashboard | KPI cards, income vs expenses chart (6 months), 7-day attendance chart, subscriptions expiring within 7 days, recent payments |
+| Members | Add, search and filter members. Auto member code (`GYM-00001`), BMI, assigned trainer, profile with subscription / payment / attendance history, optional plan and payment at registration |
+| Subscriptions | Assign or renew a plan, end date calculated from the plan, discount, paid and due amounts, cancel, automatic expiry, "expiring soon" filter |
+| Payments | Cash, card, bank transfer or online. Auto invoice number (`INV-YYYYMM-00001`), printable receipt, date and method filters |
+| Attendance | One-click check-in and check-out, daily log, warning when a member has no active plan |
+| Membership plans | Pricing cards with feature list. A plan that has been sold cannot be deleted, only deactivated |
+| Trainers | Specialization, experience, salary and assigned members |
+| Expenses | Categorised expenses with date filters and totals |
+| Inquiries | Leads from the website, status workflow, "convert to member" |
+| Reports | Yearly income, expenses, profit, new members and visits per month, with charts |
+| Staff users | Admin-only. Two roles: `admin` and `staff` |
+| My profile | Update your details and password |
+
+The interface is responsive. On a phone the sidebar becomes a slide-in menu and tables scroll inside their cards.
 
 ---
 
-## 🗄️ Database Schema
+## Screenshots
 
-📐 **ERD, keys and relationships:** [docs/ERD.md](docs/ERD.md) · DDL: [docs/schema.sql](docs/schema.sql) · Example JOIN queries: [docs/queries.sql](docs/queries.sql)
+| Dashboard | Member profile |
+|---|---|
+| ![Dashboard](docs/screenshots/dashboard.jpg) | ![Member profile](docs/screenshots/member-profile.jpg) |
 
-📄 **Project report (Word):** [docs/IronPulse_Gym_DBMS_Project_Report.docx](docs/IronPulse_Gym_DBMS_Project_Report.docx)
+| New subscription | Invoice |
+|---|---|
+| ![Subscription](docs/screenshots/subscription.jpg) | ![Invoice](docs/screenshots/invoice.jpg) |
 
-🧩 **Views, stored procedures, triggers and CHECK constraints:** [docs/dbms_objects.sql](docs/dbms_objects.sql). Run it once after `php artisan migrate --seed` (in phpMyAdmin → SQL tab). It adds 5 views, 5 stored procedures, 3 triggers, 6 CHECK constraints, 2 indexes and an audit table. The app works with or without them.
+![Reports](docs/screenshots/reports.jpg)
 
-![ERD](docs/erd.png)
+**On a phone**
 
-```
-users              (id, name, email, phone, role[admin|staff], is_active, password, ...)
-membership_plans   (id, name, duration_days, price, description, features, is_active)
-trainers           (id, name, email, phone, gender, specialization, experience_years, salary, joined_at, bio, status)
-members            (id, member_code, name, email, phone, gender, dob, address, emergency_contact,
-                    height_cm, weight_kg, trainer_id → trainers, joined_at, status, notes)
-subscriptions      (id, member_id → members, membership_plan_id → membership_plans,
-                    start_date, end_date, amount, discount, status[active|expired|cancelled])
-payments           (id, invoice_no, member_id → members, subscription_id → subscriptions,
-                    amount, method, paid_at, reference, notes, received_by → users)
-attendances        (id, member_id → members, date, check_in, check_out)
-expenses           (id, title, category, amount, spent_on, notes)
-inquiries          (id, name, email, phone, membership_plan_id → membership_plans, message, status)
-sessions, password_reset_tokens  (Laravel defaults)
-```
-
-**Relationships:** Member *belongsTo* Trainer · Member *hasMany* Subscriptions / Payments / Attendances · Subscription *belongsTo* Plan and *hasMany* Payments · Payment *belongsTo* User (received by).
-Foreign keys use `cascadeOnDelete` / `nullOnDelete` / `restrictOnDelete` where each makes sense.
+| Dashboard | Menu | Website |
+|---|---|---|
+| ![](docs/screenshots/mobile-dashboard.jpg) | ![](docs/screenshots/mobile-menu.jpg) | ![](docs/screenshots/mobile-website.jpg) |
 
 ---
 
-## 🚀 Local Setup
+## Tech stack
 
-Requirements: PHP 8.2+ with `pdo_mysql`, Composer, MySQL 5.7+ or MariaDB 10.3+.
+| Layer | Technology |
+|---|---|
+| Backend | PHP 8.2+, Laravel 11 (MVC), Eloquent ORM |
+| Database | MySQL 5.7+ / MariaDB 10.3+, InnoDB, utf8mb4 |
+| Frontend | Blade templates, Bootstrap 5.3, Bootstrap Icons, Chart.js 4 (all from a CDN) |
+| Auth | Session login, bcrypt passwords, CSRF protection |
+| Sessions / cache | File driver |
+| Hosting target | Shared cPanel (Apache + PHP + MySQL) |
+
+---
+
+## Quick start
+
+**Requirements:** PHP 8.2+ with the `pdo_mysql` extension, Composer, and MySQL or MariaDB.
 
 ```bash
-git clone <this-repo> gym && cd gym
+git clone https://github.com/asjad2a9/dbms-uni-project.git
+cd dbms-uni-project
 composer install
 cp .env.example .env
 php artisan key:generate
-# create an empty MySQL database (e.g. gym_db) and set DB_* in .env
+```
+
+Create an empty MySQL database (for example `gym_db`) and put its name and login in `.env` (`DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`). Then run:
+
+```bash
 php artisan migrate --seed
 php artisan serve
 ```
 
-Open http://127.0.0.1:8000 for the website and http://127.0.0.1:8000/login for the admin panel.
+Open <http://127.0.0.1:8000> for the website and <http://127.0.0.1:8000/login> for the admin panel.
 
-### Demo logins (from the seeder)
+The seeder loads demo data: 4 plans, 5 trainers, 30 members with a year of subscriptions, payments and attendance, 12 months of expenses and 5 inquiries.
+
+---
+
+## Demo accounts
 
 | Role | Email | Password |
 |---|---|---|
 | Admin | `admin@gym.test` | `password` |
 | Staff | `staff@gym.test` | `password` |
 
-The seeder adds 4 plans, 5 trainers, 30 members with a year of subscriptions, payments and attendance, 12 months of expenses, and 5 inquiries.
+Change these passwords (*My Profile*) before you put the site online.
 
 ---
 
-## ☁️ Deploying to Shared cPanel Hosting
+## Database
 
-1. **Build locally:** run `composer install --no-dev --optimize-autoloader`, then zip the whole project, including `vendor/`.
-2. **Upload:** in cPanel → *File Manager*, upload and extract into a folder **outside** `public_html`, e.g. `/home/USER/gym`.
-3. **Point the web root to `public/`.** Pick one:
-   - **Addon domain or subdomain:** set its document root to `/home/USER/gym/public`.
-   - **Main domain:** copy the contents of `gym/public/` into `public_html/`, then edit `public_html/index.php`:
+9 tables and 8 foreign keys. The full diagram, key tables and relationship rules are in [`docs/ERD.md`](docs/ERD.md).
+
+![ERD](docs/erd.png)
+
+| Table | Purpose |
+|---|---|
+| `users` | Admin and staff accounts |
+| `trainers` | Coaches |
+| `members` | Gym members (unique `member_code`, optional `trainer_id`) |
+| `membership_plans` | Plans for sale |
+| `subscriptions` | Associative table: a member holds a plan for a period (this resolves the many-to-many between members and plans) |
+| `payments` | Money received, with a unique `invoice_no` |
+| `attendances` | One row per visit |
+| `expenses` | Gym costs |
+| `inquiries` | Leads from the website form |
+
+**Relationships:** trainer 1 → N members · member 1 → N subscriptions / payments / attendances · plan 1 → N subscriptions · subscription 1 → N payments · user 1 → N payments · plan 1 → N inquiries.
+
+**Delete rules:** `CASCADE` for a member's own records, `SET NULL` where history must survive, `RESTRICT` so a plan that has been sold cannot be deleted.
+
+### Optional: views, stored procedures and triggers
+
+[`docs/dbms_objects.sql`](docs/dbms_objects.sql) adds extra database objects for DBMS coursework:
+
+- 5 views (active memberships, balance per subscription, monthly finance, trainer workload, daily attendance)
+- 5 stored procedures, including a renewal that saves the subscription and payment in one transaction
+- 3 triggers (payment must belong to the member, no double check-in, subscription audit log)
+- 6 `CHECK` constraints, 2 indexes and one audit table
+
+Run it once **after** `php artisan migrate --seed`. Use the phpMyAdmin *SQL* tab, or:
+
+```bash
+mysql -u USER -p DB_NAME < docs/dbms_objects.sql
+```
+
+The app works with or without it. [`docs/queries.sql`](docs/queries.sql) has 18 example queries (all join types, subqueries, aggregates, functions).
+
+---
+
+## Deploying to shared cPanel hosting
+
+1. **Build locally.** Run `composer install --no-dev --optimize-autoloader`, then zip the whole project including `vendor/`.
+2. **Upload** it with cPanel *File Manager* to a folder **outside** `public_html`, for example `/home/USER/gym`, and extract it.
+3. **Point the web root at `public/`.** Pick one:
+   - *Subdomain or addon domain:* set its document root to `/home/USER/gym/public`.
+   - *Main domain:* copy the contents of `gym/public/` into `public_html/`, then edit `public_html/index.php` so the three paths point to the app folder:
      ```php
      require __DIR__.'/../gym/vendor/autoload.php';
      $app = require_once __DIR__.'/../gym/bootstrap/app.php';
-     // and the maintenance line:
+     // and in the maintenance check:
      if (file_exists($maintenance = __DIR__.'/../gym/storage/framework/maintenance.php')) {
      ```
-4. **Database:** cPanel → *MySQL® Databases*. Create a database and a user, and give the user **ALL PRIVILEGES** on it.
-5. **.env:** copy `.env.example` to `.env` and set:
+4. **Create the database** in cPanel → *MySQL® Databases*. Add a user and give it **ALL PRIVILEGES**.
+5. **Create `.env`** from `.env.example` and set:
    ```env
    APP_ENV=production
    APP_DEBUG=false
@@ -118,39 +190,69 @@ The seeder adds 4 plans, 5 trainers, 30 members with a year of subscriptions, pa
    CACHE_STORE=file
    QUEUE_CONNECTION=sync
    ```
-6. **Run migrations:**
-   - With *Terminal* or SSH: `php artisan key:generate && php artisan migrate --seed --force && php artisan config:cache && php artisan route:cache && php artisan view:cache`
-   - Without SSH: run the commands locally against an empty MySQL database, export it with phpMyAdmin, and import it on the server. Generate `APP_KEY` locally and paste it into `.env`.
+6. **Run the migrations.**
+   - *With Terminal or SSH:* `php artisan key:generate && php artisan migrate --seed --force && php artisan config:cache && php artisan route:cache && php artisan view:cache`
+   - *Without SSH:* run the same commands locally against an empty MySQL database, export it from phpMyAdmin, and import it on the server. Generate `APP_KEY` locally and paste it into the server's `.env`.
 7. **Permissions:** `storage/` and `bootstrap/cache/` must be writable (755 or 775).
-8. **Optional daily auto-expire:** subscriptions already expire automatically whenever the dashboard or subscriptions page loads, so no cron job is needed.
 
-> After you log in, change the demo passwords from **My Profile**, or create real users under **Staff Users**.
+No cron job is needed. Subscriptions are marked expired automatically whenever the dashboard or subscriptions page loads.
 
 ---
 
-## 📁 Project Structure (key parts)
+## Project structure
 
 ```
-app/Http/Controllers/
-  AuthController.php, SiteController.php
-  Admin/ Dashboard, Member, Subscription, Payment, Attendance, MembershipPlan,
-         Trainer, Expense, Inquiry, Report, User, Profile controllers
-app/Http/Middleware/EnsureAdmin.php      # 'admin' middleware alias
-app/Models/                              # 9 Eloquent models
-config/gym.php                           # currency, address, phone, hours
-database/migrations/                     # 9 migrations
-database/seeders/DatabaseSeeder.php      # demo data
-public/css/admin.css                     # theme (no build step)
+app/
+  Http/Controllers/
+    AuthController.php, SiteController.php      login, public website, join form
+    Admin/                                      one controller per admin module
+  Http/Middleware/EnsureAdmin.php               'admin' route middleware
+  Models/                                       9 Eloquent models
+bootstrap/app.php                               middleware aliases and redirects
+config/gym.php                                  currency, address, phone, hours
+database/
+  migrations/                                   schema as code
+  seeders/DatabaseSeeder.php                    demo data
+docs/                                           ERD, SQL scripts, screenshots, project report
+public/
+  css/                                          admin.css, site.css (no build step)
+  images/                                       website photos
 resources/views/
-  layouts/admin.blade.php, partials/, auth/login, site/home, admin/<module>/...
-routes/web.php
+  layouts/, partials/, auth/, site/, admin/<module>/
+routes/web.php                                  all 60 routes
 ```
 
-## ⚙️ Customisation
+---
 
-In `.env`: `APP_NAME="IronPulse Gym"`, `GYM_CURRENCY=Rs`, `GYM_ADDRESS`, `GYM_PHONE`, `GYM_EMAIL`, `GYM_HOURS`.
-To change the brand colour, edit `--brand` in `public/css/admin.css`.
+## Configuration
 
-## 🧰 Tech Stack
+Set these in `.env`:
 
-Laravel 11 · PHP 8.2+ · MySQL · Blade · Bootstrap 5.3 · Bootstrap Icons · Chart.js 4. All front-end assets load from a CDN.
+| Variable | Default | Meaning |
+|---|---|---|
+| `APP_NAME` | `IronPulse Gym` | Name shown in the site and admin panel |
+| `GYM_CURRENCY` | `Rs` | Currency label |
+| `GYM_ADDRESS`, `GYM_PHONE`, `GYM_EMAIL` | sample values | Shown on the website and on invoices |
+| `GYM_HOURS` | sample hours | Shown on the website |
+
+To change the brand colour, edit `--brand` in `public/css/admin.css` and `public/css/site.css`.
+
+---
+
+## Documentation
+
+| File | Contents |
+|---|---|
+| [`docs/ERD.md`](docs/ERD.md) | ERD, relationship table, keys and indexes |
+| [`docs/schema.sql`](docs/schema.sql) | Table definitions exported from MySQL |
+| [`docs/queries.sql`](docs/queries.sql) | 18 example queries |
+| [`docs/dbms_objects.sql`](docs/dbms_objects.sql) | Views, procedures, triggers, CHECK constraints |
+| [`docs/IronPulse_Gym_DBMS_Project_Report.docx`](docs/IronPulse_Gym_DBMS_Project_Report.docx) | Project report (Word) |
+
+---
+
+## Team
+
+Umais · Asjad · Ahmed
+
+DBMS semester project, Ziauddin University.
